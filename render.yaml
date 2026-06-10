@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: scriptmatch
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      playwright install chromium
+    startCommand: uvicorn api:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: UPDATE_INTERVAL
+        value: "60"
+      - key: HOST
+        value: "0.0.0.0"
