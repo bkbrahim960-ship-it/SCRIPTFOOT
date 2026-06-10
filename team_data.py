@@ -1,9 +1,11 @@
+import re
+
 TEAMS = {
-    # === الدوري السعودي (18 فريق) ===
+    # === الدوري السعودي (18) ===
     "الهلال": {"ar": "الهلال", "en": "Al-Hilal", "logo": "https://upload.wikimedia.org/wikipedia/en/0/0a/Al-Hilal_FC_logo.svg"},
     "النصر": {"ar": "النصر", "en": "Al-Nassr", "logo": "https://upload.wikimedia.org/wikipedia/en/2/2c/Al-Nassr_FC_logo.svg"},
     "الاتحاد": {"ar": "الاتحاد", "en": "Al-Ittihad", "logo": "https://upload.wikimedia.org/wikipedia/en/3/39/Al-Ittihad_FC_logo.svg"},
-    "الأهلي": {"ar": "الأهلي", "en": "Al-Ahli", "logo": "https://upload.wikimedia.org/wikipedia/en/f/f8/Al-Ahli_FC_%28Jeddah%29_logo.svg"},
+    "الأهلي السعودي": {"ar": "الأهلي", "en": "Al-Ahli", "logo": "https://upload.wikimedia.org/wikipedia/en/f/f8/Al-Ahli_FC_%28Jeddah%29_logo.svg"},
     "الشباب": {"ar": "الشباب", "en": "Al-Shabab", "logo": "https://upload.wikimedia.org/wikipedia/en/9/9c/Al-Shabab_FC_logo.svg"},
     "الاتفاق": {"ar": "الاتفاق", "en": "Al-Ettifaq", "logo": "https://upload.wikimedia.org/wikipedia/en/4/4d/Al-Ettifaq_FC_logo.svg"},
     "التعاون": {"ar": "التعاون", "en": "Al-Taawoun", "logo": "https://upload.wikimedia.org/wikipedia/en/d/df/Al-Taawoun_FC_logo.svg"},
@@ -11,7 +13,7 @@ TEAMS = {
     "ضمك": {"ar": "ضمك", "en": "Damac", "logo": "https://upload.wikimedia.org/wikipedia/en/4/4a/Damac_FC_logo.svg"},
     "الرائد": {"ar": "الرائد", "en": "Al-Raed", "logo": "https://upload.wikimedia.org/wikipedia/en/a/a2/Al-Raed_FC_logo.svg"},
     "الوحدة": {"ar": "الوحدة", "en": "Al-Wehda", "logo": "https://upload.wikimedia.org/wikipedia/en/a/a5/Al-Wehda_FC_logo.svg"},
-    "الخليج": {"ar": "الخليج", "en": "Al-Khaleej", "logo": "https://upload.wikimedia.org/wikipedia/en/c/c9/Al-Khaleej_FC_logo.svg"},
+    "الخليج السعودي": {"ar": "الخليج", "en": "Al-Khaleej", "logo": "https://upload.wikimedia.org/wikipedia/en/c/c9/Al-Khaleej_FC_logo.svg"},
     "أبها": {"ar": "أبها", "en": "Abha", "logo": "https://upload.wikimedia.org/wikipedia/en/1/1b/Abha_FC_logo.svg"},
     "الرياض": {"ar": "الرياض", "en": "Al-Riyadh", "logo": "https://upload.wikimedia.org/wikipedia/en/1/1a/Al-Riyadh_SC_logo.svg"},
     "الحزم": {"ar": "الحزم", "en": "Al-Hazem", "logo": "https://upload.wikimedia.org/wikipedia/en/c/ca/Al-Hazem_FC_logo.svg"},
@@ -19,7 +21,7 @@ TEAMS = {
     "الطائي": {"ar": "الطائي", "en": "Al-Tai", "logo": "https://upload.wikimedia.org/wikipedia/en/1/17/Al-Tai_FC_logo.svg"},
     "الباطن": {"ar": "الباطن", "en": "Al-Batin", "logo": "https://upload.wikimedia.org/wikipedia/en/a/a5/Al-Batin_FC_logo.svg"},
 
-    # === الدوري المصري (18 فريق) ===
+    # === الدوري المصري (18) ===
     "الأهلي المصري": {"ar": "الأهلي", "en": "Al-Ahly", "logo": "https://upload.wikimedia.org/wikipedia/en/8/80/Al_Ahly_FC_logo.svg"},
     "الزمالك": {"ar": "الزمالك", "en": "Zamalek", "logo": "https://upload.wikimedia.org/wikipedia/en/4/4b/Zamalek_SC_logo.svg"},
     "بيراميدز": {"ar": "بيراميدز", "en": "Pyramids", "logo": "https://upload.wikimedia.org/wikipedia/en/4/4e/Pyramids_FC_logo.svg"},
@@ -39,7 +41,7 @@ TEAMS = {
     "بتروجيت": {"ar": "بتروجيت", "en": "Petrojet", "logo": ""},
     "غزل المحلة": {"ar": "غزل المحلة", "en": "Ghazl El-Mahalla", "logo": ""},
 
-    # === الدوري الإنجليزي (20 فريق) ===
+    # === الدوري الإنجليزي (20) ===
     "مانشستر سيتي": {"ar": "مانشستر سيتي", "en": "Manchester City", "logo": "https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg"},
     "مانشستر يونايتد": {"ar": "مانشستر يونايتد", "en": "Manchester United", "logo": "https://upload.wikimedia.org/wikipedia/en/7/7a/Manchester_United_FC_crest.svg"},
     "ليفربول": {"ar": "ليفربول", "en": "Liverpool", "logo": "https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg"},
@@ -61,7 +63,7 @@ TEAMS = {
     "ساوثهامبتون": {"ar": "ساوثهامبتون", "en": "Southampton", "logo": "https://upload.wikimedia.org/wikipedia/en/c/c9/Southampton_FC_logo.svg"},
     "إيبسويتش تاون": {"ar": "إيبسويتش", "en": "Ipswich Town", "logo": ""},
 
-    # === الدوري الإسباني (15 فريق) ===
+    # === الدوري الإسباني (15) ===
     "ريال مدريد": {"ar": "ريال مدريد", "en": "Real Madrid", "logo": "https://upload.wikimedia.org/wikipedia/en/9/98/Real_Madrid_CF.svg"},
     "برشلونة": {"ar": "برشلونة", "en": "Barcelona", "logo": "https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg"},
     "أتلتيكو مدريد": {"ar": "أتلتيكو مدريد", "en": "Atletico Madrid", "logo": "https://upload.wikimedia.org/wikipedia/en/0/06/Atl%C3%A9tico_Madrid_2017_logo.svg"},
@@ -78,7 +80,7 @@ TEAMS = {
     "ريال مايوركا": {"ar": "مايوركا", "en": "Mallorca", "logo": ""},
     "ديبورتيفو ألافيس": {"ar": "ألافيس", "en": "Alaves", "logo": ""},
 
-    # === الدوري الإيطالي (15 فريق) ===
+    # === الدوري الإيطالي (15) ===
     "يوفنتوس": {"ar": "يوفنتوس", "en": "Juventus", "logo": "https://upload.wikimedia.org/wikipedia/en/8/84/Juventus_FC_2017_logo.svg"},
     "إيه سي ميلان": {"ar": "ميلان", "en": "AC Milan", "logo": "https://upload.wikimedia.org/wikipedia/en/d/d0/AC_Milan_logo.svg"},
     "إنتر ميلان": {"ar": "إنتر ميلان", "en": "Inter Milan", "logo": "https://upload.wikimedia.org/wikipedia/en/0/05/Inter_FC_logo.svg"},
@@ -95,7 +97,7 @@ TEAMS = {
     "كالياري": {"ar": "كالياري", "en": "Cagliari", "logo": ""},
     "بارما": {"ar": "بارما", "en": "Parma", "logo": ""},
 
-    # === الدوري الألماني (12 فريق) ===
+    # === الدوري الألماني (12) ===
     "بايرن ميونخ": {"ar": "بايرن ميونخ", "en": "Bayern Munich", "logo": "https://upload.wikimedia.org/wikipedia/en/1/1b/FC_Bayern_M%C3%BCnchen_logo_%282017%29.svg"},
     "بوروسيا دورتموند": {"ar": "بوروسيا دورتموند", "en": "Borussia Dortmund", "logo": "https://upload.wikimedia.org/wikipedia/en/6/67/Borussia_Dortmund_logo.svg"},
     "باير ليفركوزن": {"ar": "باير ليفركوزن", "en": "Bayer Leverkusen", "logo": "https://upload.wikimedia.org/wikipedia/en/5/59/Bayer_04_Leverkusen_logo.svg"},
@@ -109,7 +111,7 @@ TEAMS = {
     "ماينز": {"ar": "ماينز", "en": "Mainz", "logo": ""},
     "هايدنهايم": {"ar": "هايدنهايم", "en": "Heidenheim", "logo": ""},
 
-    # === الدوري الفرنسي (10 فريق) ===
+    # === الدوري الفرنسي (10) ===
     "باريس سان جيرمان": {"ar": "باريس سان جيرمان", "en": "Paris Saint-Germain", "logo": "https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg"},
     "مرسيليا": {"ar": "مرسيليا", "en": "Marseille", "logo": "https://upload.wikimedia.org/wikipedia/en/7/7a/Olympique_Marseille_logo.svg"},
     "موناكو": {"ar": "موناكو", "en": "Monaco", "logo": "https://upload.wikimedia.org/wikipedia/en/d/d4/AS_Monaco_FC_logo.svg"},
@@ -121,7 +123,7 @@ TEAMS = {
     "تولوز": {"ar": "تولوز", "en": "Toulouse", "logo": ""},
     "ستاد بريست": {"ar": "بريست", "en": "Brest", "logo": ""},
 
-    # === الدوري التركي (8 فريق) ===
+    # === الدوري التركي (8) ===
     "غلطة سراي": {"ar": "غلطة سراي", "en": "Galatasaray", "logo": ""},
     "فنربخشة": {"ar": "فنربخشة", "en": "Fenerbahce", "logo": ""},
     "بشكتاش": {"ar": "بشكتاش", "en": "Besiktas", "logo": ""},
@@ -131,23 +133,21 @@ TEAMS = {
     "سيفاسبور": {"ar": "سيفاسبور", "en": "Sivasspor", "logo": ""},
     "قونيا سبور": {"ar": "قونيا", "en": "Konyaspor", "logo": ""},
 
-    # === الدوري البرتغالي (6 فريق) ===
+    # === أندية أوروبية أخرى ===
     "بنفيكا": {"ar": "بنفيكا", "en": "Benfica", "logo": ""},
     "سبورتينغ لشبونة": {"ar": "سبورتينغ", "en": "Sporting Lisbon", "logo": ""},
     "بورتو": {"ar": "بورتو", "en": "Porto", "logo": ""},
-    "سبورتينغ براغا": {"ar": "براغا", "en": "Braga", "logo": ""},
-    "فيتوريا غيمارايش": {"ar": "غيمارايش", "en": "Vitoria Guimaraes", "logo": ""},
-    "ريو أفي": {"ar": "ريو أفي", "en": "Rio Ave", "logo": ""},
-
-    # === الدوري الهولندي (6 فريق) ===
     "أياكس": {"ar": "أياكس", "en": "Ajax", "logo": ""},
     "بي إس في آيندهوفن": {"ar": "آيندهوفن", "en": "PSV Eindhoven", "logo": ""},
     "فينورد": {"ar": "فينورد", "en": "Feyenoord", "logo": ""},
+    "سبورتينغ براغا": {"ar": "براغا", "en": "Braga", "logo": ""},
+    "فيتوريا غيمارايش": {"ar": "غيمارايش", "en": "Vitoria Guimaraes", "logo": ""},
+    "ريو أفي": {"ar": "ريو أفي", "en": "Rio Ave", "logo": ""},
     "تفينتي": {"ar": "تفينتي", "en": "Twente", "logo": ""},
     "إي زد ألكمار": {"ar": "ألكمار", "en": "AZ Alkmaar", "logo": ""},
     "أوترخت": {"ar": "أوترخت", "en": "Utrecht", "logo": ""},
 
-    # === أندية عربية أخرى ===
+    # === أندية عربية ===
     "الترجي": {"ar": "الترجي", "en": "Esperance", "logo": ""},
     "النجم الساحلي": {"ar": "النجم الساحلي", "en": "Etoile du Sahel", "logo": ""},
     "النادي الصفاقسي": {"ar": "الصفاقسي", "en": "CS Sfaxien", "logo": ""},
@@ -166,8 +166,6 @@ TEAMS = {
     "الجزيرة": {"ar": "الجزيرة", "en": "Al-Jazira", "logo": ""},
     "الكويت": {"ar": "الكويت", "en": "Kuwait SC", "logo": ""},
     "العربي الكويتي": {"ar": "العربي", "en": "Al-Arabi", "logo": ""},
-    "الرفاع": {"ar": "الرفاع", "en": "Al-Riffa", "logo": ""},
-    "المحرق": {"ar": "المحرق", "en": "Al-Muharraq", "logo": ""},
 
     # === منتخبات ===
     "البرازيل": {"ar": "البرازيل", "en": "Brazil", "logo": "https://upload.wikimedia.org/wikipedia/en/0/0c/Flag_of_Brazil.svg"},
@@ -206,6 +204,32 @@ TEAMS = {
     "بوليفيا": {"ar": "بوليفيا", "en": "Bolivia", "logo": ""},
     "النمسا": {"ar": "النمسا", "en": "Austria", "logo": ""},
     "غواتيمالا": {"ar": "غواتيمالا", "en": "Guatemala", "logo": ""},
+    "كندا": {"ar": "كندا", "en": "Canada", "logo": ""},
+    "أستراليا": {"ar": "أستراليا", "en": "Australia", "logo": ""},
+    "بولندا": {"ar": "بولندا", "en": "Poland", "logo": ""},
+    "كرواتيا": {"ar": "كرواتيا", "en": "Croatia", "logo": ""},
+    "الدانمرك": {"ar": "الدانمرك", "en": "Denmark", "logo": ""},
+    "سويسرا": {"ar": "سويسرا", "en": "Switzerland", "logo": ""},
+    "السويد": {"ar": "السويد", "en": "Sweden", "logo": ""},
+    "النرويج": {"ar": "النرويج", "en": "Norway", "logo": ""},
+    "أوكرانيا": {"ar": "أوكرانيا", "en": "Ukraine", "logo": ""},
+    "روسيا": {"ar": "روسيا", "en": "Russia", "logo": ""},
+    "صربيا": {"ar": "صربيا", "en": "Serbia", "logo": ""},
+    "تركيا": {"ar": "تركيا", "en": "Turkey", "logo": ""},
+    "رومانيا": {"ar": "رومانيا", "en": "Romania", "logo": ""},
+    "جمهورية التشيك": {"ar": "التشيك", "en": "Czech Republic", "logo": ""},
+    "اليونان": {"ar": "اليونان", "en": "Greece", "logo": ""},
+    "سكوتلندا": {"ar": "سكوتلندا", "en": "Scotland", "logo": ""},
+    "ويلز": {"ar": "ويلز", "en": "Wales", "logo": ""},
+    "إكوادور": {"ar": "إكوادور", "en": "Ecuador", "logo": ""},
+    "بيرو": {"ar": "بيرو", "en": "Peru", "logo": ""},
+    "تشيلي": {"ar": "تشيلي", "en": "Chile", "logo": ""},
+    "باراغواي": {"ar": "باراغواي", "en": "Paraguay", "logo": ""},
+    "فنزويلا": {"ar": "فنزويلا", "en": "Venezuela", "logo": ""},
+    "هندوراس": {"ar": "هندوراس", "en": "Honduras", "logo": ""},
+    "بنما": {"ar": "بنما", "en": "Panama", "logo": ""},
+    "إيران": {"ar": "إيران", "en": "Iran", "logo": ""},
+    "أوزبكستان": {"ar": "أوزبكستان", "en": "Uzbekistan", "logo": ""},
 }
 
 ALIASES = {
@@ -231,18 +255,34 @@ ALIASES = {
     "benfica": "بنفيكا", "porto": "بورتو", "sporting": "سبورتينغ لشبونة",
     "ajax": "أياكس", "psv": "بي إس في آيندهوفن", "feyenoord": "فينورد",
     "galatasaray": "غلطة سراي", "fenerbahce": "فنربخشة", "besiktas": "بشكتاش",
-    "الاهلي السعودي": "الأهلي", "الاهلى السعودي": "الأهلي",
+    "الاهلي السعودي": "الأهلي السعودي", "الاهلى السعودي": "الأهلي السعودي",
     "الزمالك": "الزمالك", "zamalek": "الزمالك",
-    "الترجي": "الترجي", "esperance": "الترجي",
-    "الوداد": "الوداد", "wydad": "الوداد",
-    "الرجاء": "الرجاء", "raja": "الرجاء",
     "england": "إنجلترا", "france": "فرنسا", "germany": "ألمانيا",
     "spain": "إسبانيا", "italy": "إيطاليا", "brazil": "البرازيل",
     "argentina": "الأرجنتين", "portugal": "البرتغال", "netherlands": "هولندا",
     "belgium": "بلجيكا", "morocco": "المغرب", "algeria": "الجزائر",
     "tunisia": "تونس", "egypt": "مصر",
-    "mexico": "المكسيك", "nigeria": "نيجيريا",
+    "mexico": "المكسيك", "nigeria": "نيجيريا", "cameroon": "الكاميرون",
+    "senegal": "السنغال", "ghana": "غانا", "ivory coast": "ساحل العاج",
+    "south africa": "جنوب أفريقيا", "costa rica": "كوستاريكا",
+    "bolivia": "بوليفيا", "austria": "النمسا", "guatemala": "غواتيمالا",
+    "poland": "بولندا", "croatia": "كرواتيا", "denmark": "الدانمرك",
+    "switzerland": "سويسرا", "sweden": "السويد", "norway": "النرويج",
+    "ukraine": "أوكرانيا", "russia": "روسيا", "serbia": "صربيا",
+    "usa": "الولايات المتحدة", "uruguay": "الأوروغواي", "colombia": "كولومبيا",
+    "japan": "اليابان", "south korea": "كوريا الجنوبية",
+    "canada": "كندا", "australia": "أستراليا",
+    "ecuador": "إكوادور", "peru": "بيرو", "chile": "تشيلي",
+    "paraguay": "باراغواي", "venezuela": "فنزويلا",
+    "الخليج السعودي": "الخليج السعودي",
+    "الاتحاد السكندري": "الاتحاد السكندري",
 }
+
+ALL_TEAM_NAMES = []  # filled below
+for key, data in TEAMS.items():
+    ALL_TEAM_NAMES.append((data["ar"], key))
+    ALL_TEAM_NAMES.append((data["en"], key))
+ALL_TEAM_NAMES.sort(key=lambda x: -len(x[0]))
 
 
 def find_team(name: str) -> dict | None:
@@ -254,23 +294,46 @@ def find_team(name: str) -> dict | None:
     if lookup in ALIASES:
         key = ALIASES[lookup]
         if key in TEAMS:
-            return {"key": key, **TEAMS[key]}
+            return _build(key)
 
     for key, data in TEAMS.items():
         if name == data["ar"] or name.lower() == data["en"].lower():
-            return {"key": key, **data}
+            return _build(key)
 
     for alias_key, alias_val in ALIASES.items():
         if alias_key in lookup:
             if alias_val in TEAMS:
-                return {"key": alias_val, **TEAMS[alias_val]}
+                return _build(alias_val)
 
     for key, data in TEAMS.items():
-        if data["ar"] in name or name in data["ar"]:
-            return {"key": key, **data}
+        if data["ar"] and (data["ar"] in name or name in data["ar"]):
+            return _build(key)
 
     for key, data in TEAMS.items():
         if data["en"].lower() in lookup or lookup in data["en"].lower():
-            return {"key": key, **data}
+            return _build(key)
 
     return None
+
+
+def find_teams_in_text(text: str) -> list:
+    found = []
+    text_lower = text.lower()
+    for tname, key in ALL_TEAM_NAMES:
+        if not tname:
+            continue
+        if tname.lower() in text_lower and key not in [f.get("key") for f in found]:
+            info = _build(key)
+            if info:
+                found.append(info)
+        if len(found) >= 2:
+            break
+    return found[:2]
+
+
+def _build(key):
+    data = TEAMS.get(key)
+    if not data:
+        return None
+    logo = data.get("logo") or f"https://ui-avatars.com/api/?name={data['ar']}&background=random&color=fff&size=128"
+    return {"key": key, "ar": data["ar"], "en": data["en"], "logo": logo}

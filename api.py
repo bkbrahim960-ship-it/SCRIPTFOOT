@@ -10,7 +10,7 @@ from config import config
 from database import db
 from models import MatchResponse, SingleMatchResponse, HealthResponse, Match, Team
 from updater import Updater
-from team_data import find_team
+from team_data import find_team, find_teams_in_text
 
 app = FastAPI(
     title=config.api_title,
@@ -31,6 +31,17 @@ _start_time = time.time()
 
 
 def enrich_match(match: Match) -> Match:
+    if not match.home_team and not match.away_team:
+        teams = find_teams_in_text(match.title)
+        if len(teams) >= 2:
+            match.home_team = teams[0]["ar"]
+            match.away_team = teams[1]["ar"]
+            match.home_team_info = Team(name=teams[0]["ar"], name_en=teams[0].get("en"), logo=teams[0].get("logo"))
+            match.away_team_info = Team(name=teams[1]["ar"], name_en=teams[1].get("en"), logo=teams[1].get("logo"))
+            return match
+        elif len(teams) == 1:
+            match.home_team = teams[0]["ar"]
+            match.home_team_info = Team(name=teams[0]["ar"], name_en=teams[0].get("en"), logo=teams[0].get("logo"))
     if match.home_team:
         info = find_team(match.home_team)
         if info:
@@ -41,6 +52,15 @@ def enrich_match(match: Match) -> Match:
         if info:
             match.away_team = info["ar"]
             match.away_team_info = Team(name=info["ar"], name_en=info.get("en"), logo=info.get("logo"))
+    if not match.home_team_info or not match.away_team_info:
+        teams = find_teams_in_text(match.title)
+        for t in teams:
+            if not match.home_team_info:
+                match.home_team = t["ar"]
+                match.home_team_info = Team(name=t["ar"], name_en=t.get("en"), logo=t.get("logo"))
+            elif not match.away_team_info and t["key"] != (match.home_team_info.name if match.home_team_info else None):
+                match.away_team = t["ar"]
+                match.away_team_info = Team(name=t["ar"], name_en=t.get("en"), logo=t.get("logo"))
     return match
 
 
