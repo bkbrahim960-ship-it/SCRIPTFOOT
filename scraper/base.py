@@ -21,22 +21,24 @@ USER_AGENTS = [
     "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
 ]
 
+CLOUDSCRAPER_AVAILABLE = False
+_cloudscraper_session = None
 try:
     import cloudscraper
-    CLOUDSCRAPER_AVAILABLE = True
     _cloudscraper_session = cloudscraper.create_scraper(
         browser={"browser": "chrome", "platform": "windows", "mobile": False, "desktop": True},
         delay=1,
-        interpreter="native",
     )
-except ImportError:
+    CLOUDSCRAPER_AVAILABLE = True
+except Exception:
     CLOUDSCRAPER_AVAILABLE = False
     _cloudscraper_session = None
 
+HTTPX_AVAILABLE = False
 try:
     import httpx
     HTTPX_AVAILABLE = True
-except ImportError:
+except Exception:
     HTTPX_AVAILABLE = False
 
 HEADERS = {
@@ -60,40 +62,54 @@ class BaseScraper(ABC):
     enabled: bool = True
 
     def __init__(self):
-        self._init_clients()
+        try:
+            self._init_clients()
+        except Exception:
+            self._httpx = None
 
     def _init_clients(self):
         ua = random.choice(USER_AGENTS)
         self._cloud = _cloudscraper_session
         self._httpx = None
         if HTTPX_AVAILABLE:
-            self._httpx = httpx.Client(
-                headers={"User-Agent": ua, **HEADERS},
-                timeout=config.request_timeout,
-                follow_redirects=True,
-                verify=False,
-                http2=True,
-            )
+            try:
+                self._httpx = httpx.Client(
+                    headers={"User-Agent": ua, **HEADERS},
+                    timeout=config.request_timeout,
+                    follow_redirects=True,
+                    verify=False,
+                )
+            except Exception:
+                self._httpx = None
 
     def get(self, url: str) -> Optional[str]:
-        for attempt in range(2):
-            if CLOUDSCRAPER_AVAILABLE and self._cloud:
-                try:
-                    resp = self._cloud.get(url, timeout=config.request_timeout)
-                    if resp.status_code == 200 and len(resp.text) > 500:
-                        return resp.text
-                except Exception as e:
-                    if attempt == 0:
-                        pass
-            if HTTPX_AVAILABLE and self._httpx:
-                try:
-                    resp = self._httpx.get(url)
-                    if resp.status_code == 200 and len(resp.text) > 500:
-                        return resp.text
-                except Exception as e:
-                    if attempt == 1:
-                        pass
-            break
+        if CLOUDSCRAPER_AVAILABLE and self._cloud:
+            try:
+                resp = self._cloud.get(url, timeout=config.request_timeout)
+                if resp.status_code == 200 and len(resp.text) > 500:
+                    return resp.text
+            except Exception:
+                pass
+        if HTTPX_AVAILABLE and self._httpx:
+            try:
+                resp = self._httpx.get(url)
+                if resp.status_code == 200 and len(resp.text) > 500:
+                    return resp.text
+            except Exception:
+                pass
+        if HTTPX_AVAILABLE:
+            try:
+                new_ua = random.choice(USER_AGENTS)
+                fresh = httpx.Client(
+                    headers={"User-Agent": new_ua, "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"},
+                    timeout=15, follow_redirects=True, verify=False,
+                )
+                resp = fresh.get(url)
+                fresh.close()
+                if resp.status_code == 200 and len(resp.text) > 500:
+                    return resp.text
+            except Exception:
+                pass
         return None
 
     def soup(self, html: str) -> BeautifulSoup:
