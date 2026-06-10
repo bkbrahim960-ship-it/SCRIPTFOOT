@@ -50,6 +50,8 @@ class Database:
             """)
 
     def save_match(self, match: Match) -> bool:
+        match.home_team_info = None
+        match.away_team_info = None
         with self._lock:
             try:
                 with self._get_connection() as conn:

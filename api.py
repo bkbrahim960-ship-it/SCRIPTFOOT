@@ -8,8 +8,9 @@ from fastapi.responses import JSONResponse
 
 from config import config
 from database import db
-from models import MatchResponse, SingleMatchResponse, HealthResponse
+from models import MatchResponse, SingleMatchResponse, HealthResponse, Match, Team
 from updater import Updater
+from team_data import find_team
 
 app = FastAPI(
     title=config.api_title,
@@ -29,6 +30,20 @@ updater = Updater()
 _start_time = time.time()
 
 
+def enrich_match(match: Match) -> Match:
+    if match.home_team:
+        info = find_team(match.home_team)
+        if info:
+            match.home_team = info["ar"]
+            match.home_team_info = Team(name=info["ar"], name_en=info.get("en"), logo=info.get("logo"))
+    if match.away_team:
+        info = find_team(match.away_team)
+        if info:
+            match.away_team = info["ar"]
+            match.away_team_info = Team(name=info["ar"], name_en=info.get("en"), logo=info.get("logo"))
+    return match
+
+
 @app.on_event("startup")
 async def startup():
     updater.start()
@@ -46,6 +61,7 @@ def get_matches(
     league: Optional[str] = Query(None, description="league name filter"),
 ):
     matches = db.get_all_matches(status=status, source=source, league=league)
+    matches = [enrich_match(m) for m in matches]
     return MatchResponse(
         success=True,
         data=matches,
@@ -56,6 +72,7 @@ def get_matches(
 @app.get("/api/matches/live", response_model=MatchResponse)
 def get_live_matches():
     matches = db.get_live_matches()
+    matches = [enrich_match(m) for m in matches]
     return MatchResponse(
         success=True,
         data=matches,
@@ -71,6 +88,7 @@ def get_match(match_id: str):
             status_code=404,
             content={"success": False, "error": "Match not found", "timestamp": datetime.utcnow().isoformat()}
         )
+    match = enrich_match(match)
     return SingleMatchResponse(success=True, data=match)
 
 

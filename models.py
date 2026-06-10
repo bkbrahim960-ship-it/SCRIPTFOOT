@@ -11,12 +11,21 @@ class StreamLink(BaseModel):
     is_verified: bool = False
 
 
+class Team(BaseModel):
+    name: str
+    name_en: Optional[str] = None
+    logo: Optional[str] = None
+
+
 class Match(BaseModel):
     id: str
     title: str
     home_team: Optional[str] = None
     away_team: Optional[str] = None
+    home_team_info: Optional[Team] = None
+    away_team_info: Optional[Team] = None
     league: Optional[str] = None
+    league_logo: Optional[str] = None
     stadium: Optional[str] = None
     status: str = "scheduled"
     score: Optional[str] = None
