@@ -1,15 +1,57 @@
 import hashlib
 import re
+import random
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from typing import List, Optional
 from urllib.parse import urljoin, urlparse
 
-import httpx
 from bs4 import BeautifulSoup
 
 from config import config
 from models import Match, StreamLink
+
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
+]
+
+try:
+    import cloudscraper
+    CLOUDSCRAPER_AVAILABLE = True
+    _cloudscraper_session = cloudscraper.create_scraper(
+        browser={"browser": "chrome", "platform": "windows", "mobile": False, "desktop": True},
+        delay=1,
+        interpreter="native",
+    )
+except ImportError:
+    CLOUDSCRAPER_AVAILABLE = False
+    _cloudscraper_session = None
+
+try:
+    import httpx
+    HTTPX_AVAILABLE = True
+except ImportError:
+    HTTPX_AVAILABLE = False
+
+HEADERS = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+    "Accept-Language": "ar,en-US;q=0.9,en;q=0.8,fr;q=0.7",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Cache-Control": "max-age=0",
+    "DNT": "1",
+}
 
 
 class BaseScraper(ABC):
@@ -18,21 +60,41 @@ class BaseScraper(ABC):
     enabled: bool = True
 
     def __init__(self):
-        self.client = httpx.Client(
-            headers={"User-Agent": config.user_agent},
-            timeout=config.request_timeout,
-            follow_redirects=True,
-            verify=False,
-        )
+        self._init_clients()
+
+    def _init_clients(self):
+        ua = random.choice(USER_AGENTS)
+        self._cloud = _cloudscraper_session
+        self._httpx = None
+        if HTTPX_AVAILABLE:
+            self._httpx = httpx.Client(
+                headers={"User-Agent": ua, **HEADERS},
+                timeout=config.request_timeout,
+                follow_redirects=True,
+                verify=False,
+                http2=True,
+            )
 
     def get(self, url: str) -> Optional[str]:
-        try:
-            resp = self.client.get(url)
-            resp.raise_for_status()
-            return resp.text
-        except Exception as e:
-            print(f"[{self.name}] GET failed {url}: {e}")
-            return None
+        for attempt in range(2):
+            if CLOUDSCRAPER_AVAILABLE and self._cloud:
+                try:
+                    resp = self._cloud.get(url, timeout=config.request_timeout)
+                    if resp.status_code == 200 and len(resp.text) > 500:
+                        return resp.text
+                except Exception as e:
+                    if attempt == 0:
+                        pass
+            if HTTPX_AVAILABLE and self._httpx:
+                try:
+                    resp = self._httpx.get(url)
+                    if resp.status_code == 200 and len(resp.text) > 500:
+                        return resp.text
+                except Exception as e:
+                    if attempt == 1:
+                        pass
+            break
+        return None
 
     def soup(self, html: str) -> BeautifulSoup:
         return BeautifulSoup(html, "html.parser")
