@@ -101,6 +101,7 @@ def compute_status_ar(match: Match) -> str:
 
 @app.on_event("startup")
 async def startup():
+    db.cleanup_junk()
     updater.start()
 
 

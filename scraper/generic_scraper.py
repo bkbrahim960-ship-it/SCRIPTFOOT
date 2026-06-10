@@ -56,7 +56,7 @@ STATUS_SELECTORS = [
 
 class GenericScraper(BaseScraper):
     name = "generic"
-    enabled = True
+    enabled = False
 
     def __init__(self):
         super().__init__()
