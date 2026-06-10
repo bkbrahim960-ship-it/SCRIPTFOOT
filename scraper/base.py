@@ -60,27 +60,29 @@ class BaseScraper(ABC):
     def extract_mp4(self, html: str) -> List[str]:
         return list(set(re.findall(r'https?://[^"\'\s]+\.mp4[^"\'\s]*', html)))
 
+    EXTERNAL_PLAYERS = [
+        "youtube.com/embed", "youtube.com/watch", "youtu.be",
+        "vidmoly", "gounlimited", "streamtape", "doodstream",
+        "dood.ws", "dood.la", "mixdrop", "upstream",
+        "embed", "player.", "play.", "cdn.", "stream.",
+        "ok.ru", "vk.com", "facebook.com/watch",
+        "mega.nz", "google drive", "drive.google",
+        "hls.", "mp4.", "m3u8",
+    ]
+
     def extract_links(self, html: str, use_resolver: bool = True) -> List[StreamLink]:
         links = []
         seen = set()
 
         for url in self.extract_m3u8(html):
-            final = self._maybe_resolve(url) if use_resolver else url
-            if final not in seen:
-                seen.add(final)
-                links.append(StreamLink(
-                    url=final, quality=self._guess_quality(final),
-                    source=self.name, is_verified=True
-                ))
+            if url not in seen:
+                seen.add(url)
+                links.append(StreamLink(url=url, source=self.name, is_verified=True))
 
         for url in self.extract_mp4(html):
-            final = self._maybe_resolve(url) if use_resolver else url
-            if final not in seen:
-                seen.add(final)
-                links.append(StreamLink(
-                    url=final, quality=self._guess_quality(final),
-                    source=self.name, is_verified=True
-                ))
+            if url not in seen:
+                seen.add(url)
+                links.append(StreamLink(url=url, source=self.name, is_verified=True))
 
         iframe_urls = self.extract_iframe_src(html)
         for url in iframe_urls:
@@ -90,15 +92,82 @@ class BaseScraper(ABC):
 
         script_links = self._extract_from_scripts(html)
         for url in script_links:
-            final = self._maybe_resolve(url) if use_resolver else url
-            if final not in seen:
-                seen.add(final)
-                links.append(StreamLink(
-                    url=final, quality=self._guess_quality(final),
-                    source=self.name, is_verified=True
-                ))
+            if url not in seen:
+                seen.add(url)
+                links.append(StreamLink(url=url, source=self.name, is_verified=True))
+
+        player_links = self._extract_player_links(html)
+        for url in player_links:
+            if url not in seen:
+                seen.add(url)
+                links.append(StreamLink(url=url, source=self.name))
+
+        data_links = self._extract_from_data_attrs(html)
+        for url in data_links:
+            if url not in seen:
+                seen.add(url)
+                links.append(StreamLink(url=url, source=self.name))
+
+        embed_links = self._extract_embeds(html)
+        for url in embed_links:
+            if url not in seen:
+                seen.add(url)
+                links.append(StreamLink(url=url, source=self.name))
 
         return links
+
+    def _extract_player_links(self, html: str) -> List[str]:
+        found = set()
+        for pattern in self.EXTERNAL_PLAYERS:
+            regex = rf'https?://[^"\'<>]*(?:{re.escape(pattern)})[^"\'<>]*'
+            for m in re.finditer(regex, html):
+                url = m.group(0).split("&")[0].strip()
+                if url.startswith("http"):
+                    found.add(url)
+            for m in re.finditer(re.escape(pattern), html, re.IGNORECASE):
+                idx = m.start()
+                for prefix in ["src=", "href=", "data-src=", "data-url=", 'url: "', 'source: "', 'file: "', 'link: "']:
+                    start = html.rfind(prefix, max(0, idx-500), idx)
+                    if start != -1:
+                        end = html.find('"', start + len(prefix))
+                        if end != -1:
+                            val = html[start+len(prefix):end]
+                            if val.startswith("http") or val.startswith("//"):
+                                if val.startswith("//"):
+                                    val = "https:" + val
+                                found.add(val)
+        return list(found)
+
+    def _extract_from_data_attrs(self, html: str) -> List[str]:
+        found = set()
+        for attr in ["data-src", "data-url", "data-link", "data-href",
+                      "data-live", "data-stream", "data-video", "data-embed",
+                      "data-player", "data-file", "data-source"]:
+            for m in re.finditer(rf'{re.escape(attr)}=["\']([^"\']+)["\']', html):
+                val = m.group(1)
+                if val.startswith("http") or val.startswith("//"):
+                    if val.startswith("//"):
+                        val = "https:" + val
+                    found.add(val)
+        return list(found)
+
+    def _extract_embeds(self, html: str) -> List[str]:
+        found = set()
+        patterns = [
+            r'embed[^"\']*["\']([^"\']+)["\']',
+            r'player[^"\']*["\']([^"\']+)["\']',
+            r'watch[^"\']*["\']([^"\']+)["\']',
+            r'live[^"\']*["\']([^"\']+)["\']',
+            r'stream[^"\']*["\']([^"\']+)["\']',
+        ]
+        for pat in patterns:
+            for m in re.finditer(pat, html):
+                val = m.group(1)
+                if val.startswith("http") or val.startswith("//"):
+                    if val.startswith("//"):
+                        val = "https:" + val
+                    found.add(val)
+        return list(found)
 
     def _maybe_resolve(self, url: str) -> str:
         try:

@@ -111,11 +111,16 @@ class MatchCenterScraper(BaseScraper):
         if parsed_time:
             match_time = parsed_time
 
-        streams = []
+        streams = self.extract_links(html)
         if match_url:
             detail = self.get(match_url)
             if detail:
-                streams = self.extract_links(detail)
+                dl = self.extract_links(detail)
+                existing = {s.url for s in streams}
+                for s in dl:
+                    if s.url not in existing:
+                        streams.append(s)
+                        existing.add(s.url)
 
         channel_els = container.select(
             ".channel, [class*=channel], .tv, .broadcast, .tv-channel"

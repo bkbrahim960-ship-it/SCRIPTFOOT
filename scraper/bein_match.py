@@ -92,18 +92,16 @@ class BeinMatchScraper(BaseScraper):
                 c.get_text(strip=True) for c in channel_els if c.get_text(strip=True)
             ))
 
-            streams = []
+            streams = self.extract_links(html)
             if match_url:
                 detail_html = self.get(match_url)
                 if detail_html:
-                    streams = self.extract_links(detail_html)
-                    soup_detail = self.soup(detail_html)
-                    embed_patterns = re.findall(
-                        r'(?:data-src|src|href)=["\']([^"\']+play[^"\']+)["\']',
-                        detail_html, re.IGNORECASE
-                    )
-                    for embed_url in embed_patterns:
-                        streams.append(StreamLink(url=embed_url, source=self.name))
+                    detail_links = self.extract_links(detail_html)
+                    existing = {s.url for s in streams}
+                    for dl in detail_links:
+                        if dl.url not in existing:
+                            streams.append(dl)
+                            existing.add(dl.url)
 
             home_team, away_team = self.extract_teams(title)
             mid = self.make_id(title, match_url or base_url)

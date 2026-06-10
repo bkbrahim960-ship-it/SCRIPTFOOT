@@ -74,23 +74,16 @@ class YallaShootScraper(BaseScraper):
                 ch.get_text(strip=True) for ch in channels if ch.get_text(strip=True)
             ))
 
-            streams = []
+            streams = self.extract_links(html)
             if match_url:
                 detail_html = self.get(match_url)
                 if detail_html:
-                    streams = self.extract_links(detail_html)
-                    soup_detail = self.soup(detail_html)
-                    extra_links = soup_detail.select(
-                        "a[href*=m3u8], a[href*=mp4], a[href*=play], "
-                        "a[href*='.tv'], a[href*='watch'], .stream-link a"
-                    )
-                    for a in extra_links:
-                        href = a.get("href", "").strip()
-                        if href and href != match_url:
-                            q = self._guess_quality(a.get_text(strip=True))
-                            streams.append(StreamLink(
-                                url=href, quality=q, source=self.name
-                            ))
+                    dl = self.extract_links(detail_html)
+                    existing = {s.url for s in streams}
+                    for s in dl:
+                        if s.url not in existing:
+                            streams.append(s)
+                            existing.add(s.url)
 
             home_team, away_team = self.extract_teams(title)
             match_id = self.make_id(title, match_url or base_url)
