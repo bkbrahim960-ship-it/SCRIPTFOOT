@@ -21,7 +21,9 @@ class MashahdScraper(BaseScraper, PlaywrightMixin):
         all_matches = []
         for base_url in self.base_urls:
             try:
-                html = self.render_page(base_url, timeout=20000)
+                html = self.render_page(base_url, timeout=20000) if PlaywrightMixin.is_available() else self.get(base_url)
+                if not html:
+                    html = self.get(base_url)
                 if not html:
                     continue
                 matches = self._parse_matches(html, base_url)
@@ -85,10 +87,12 @@ class MashahdScraper(BaseScraper, PlaywrightMixin):
             streams = []
 
             if status == "live" or status == "scheduled":
-                detail_html = self.wait_and_get_source(match_url, timeout=20000)
+                detail_html = self.wait_and_get_source(match_url, timeout=20000) if PlaywrightMixin.is_available() else None
+                if not detail_html:
+                    detail_html = self.get(match_url)
                 if detail_html:
                     extracted = self.extract_links(detail_html)
-                    network = self.extract_m3u8_from_network(match_url, timeout=15000)
+                    network = self.extract_m3u8_from_network(match_url, timeout=15000) if PlaywrightMixin.is_available() else []
                     seen_urls = set()
                     for link in extracted:
                         final = resolver.resolve(link.url)

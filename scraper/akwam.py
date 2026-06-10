@@ -21,7 +21,9 @@ class AkwamScraper(BaseScraper, PlaywrightMixin):
         all_matches = []
         for base_url in self.base_urls:
             try:
-                html = self.render_page(base_url, timeout=20000)
+                html = self.render_page(base_url, timeout=20000) if PlaywrightMixin.is_available() else self.get(base_url)
+                if not html:
+                    html = self.get(base_url)
                 if not html:
                     continue
                 matches = self._parse_matches(html, base_url)
@@ -67,10 +69,14 @@ class AkwamScraper(BaseScraper, PlaywrightMixin):
                 continue
 
             streams = []
-            detail_html = self.wait_and_get_source(match_url, selector=".video-js", timeout=25000)
+            detail_html = None
+            if PlaywrightMixin.is_available():
+                detail_html = self.wait_and_get_source(match_url, selector=".video-js", timeout=25000)
+            if not detail_html:
+                detail_html = self.get(match_url)
             if detail_html:
                 raw_links = self.extract_links(detail_html)
-                network_m3u8 = self.extract_m3u8_from_network(match_url, timeout=15000)
+                network_m3u8 = self.extract_m3u8_from_network(match_url, timeout=15000) if PlaywrightMixin.is_available() else []
                 seen_urls = set()
                 for link in raw_links:
                     final = resolver.resolve(link.url)
