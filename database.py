@@ -173,12 +173,21 @@ class Database:
             "livetv", "Neues auf", "zum beispiel", "example",
             "domain for sale", "buy this domain", "homepage",
         ]
-        with self._get_connection() as conn:
+        conn = self._get_connection()
+        try:
             for pat in junk_patterns:
                 conn.execute("DELETE FROM matches WHERE LOWER(title) LIKE ?", (f"%{pat}%",))
             conn.execute("DELETE FROM matches WHERE title IS NULL OR length(title) < 5")
             conn.execute("DELETE FROM matches WHERE home_team IS NULL AND away_team IS NULL AND title LIKE '%http%'")
-            conn.execute("VACUUM")
+            conn.commit()
+        except Exception as e:
+            print(f"[DB] Cleanup error: {e}")
+        finally:
+            try:
+                conn.execute("VACUUM")
+            except Exception:
+                pass
+            conn.close()
         print(f"[DB] Cleaned junk matches")
 
     def clear_old_matches(self, days: int = 1):
