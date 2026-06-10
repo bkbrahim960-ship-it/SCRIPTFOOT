@@ -10,7 +10,7 @@ from config import config
 from database import db
 from models import MatchResponse, SingleMatchResponse, HealthResponse, Match, Team
 from updater import Updater
-from team_data import find_team, find_teams_in_text
+from team_data import find_team, find_teams_in_text, get_team_logo
 
 app = FastAPI(
     title=config.api_title,
@@ -41,25 +41,33 @@ def enrich_match(match: Match) -> Match:
         elif len(teams) == 1:
             match.home_team = teams[0]["ar"]
             match.home_team_info = Team(name=teams[0]["ar"], name_en=teams[0].get("en"), logo=teams[0].get("logo"))
-    if match.home_team:
+    if match.home_team and not match.home_team_info:
         info = find_team(match.home_team)
         if info:
             match.home_team = info["ar"]
             match.home_team_info = Team(name=info["ar"], name_en=info.get("en"), logo=info.get("logo"))
-    if match.away_team:
+        else:
+            match.home_team_info = Team(name=match.home_team, logo=get_team_logo(match.home_team))
+    if match.away_team and not match.away_team_info:
         info = find_team(match.away_team)
         if info:
             match.away_team = info["ar"]
             match.away_team_info = Team(name=info["ar"], name_en=info.get("en"), logo=info.get("logo"))
+        else:
+            match.away_team_info = Team(name=match.away_team, logo=get_team_logo(match.away_team))
     if not match.home_team_info or not match.away_team_info:
         teams = find_teams_in_text(match.title)
         for t in teams:
             if not match.home_team_info:
                 match.home_team = t["ar"]
                 match.home_team_info = Team(name=t["ar"], name_en=t.get("en"), logo=t.get("logo"))
-            elif not match.away_team_info and t["key"] != (match.home_team_info.name if match.home_team_info else None):
+            elif not match.away_team_info and t.get("key") != (match.home_team_info.name if match.home_team_info else None):
                 match.away_team = t["ar"]
                 match.away_team_info = Team(name=t["ar"], name_en=t.get("en"), logo=t.get("logo"))
+    if match.home_team and not match.home_team_info:
+        match.home_team_info = Team(name=match.home_team, logo=get_team_logo(match.home_team))
+    if match.away_team and not match.away_team_info:
+        match.away_team_info = Team(name=match.away_team, logo=get_team_logo(match.away_team))
     match.status_ar = compute_status_ar(match)
     return match
 

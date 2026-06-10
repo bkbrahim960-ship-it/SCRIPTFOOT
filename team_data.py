@@ -335,5 +335,16 @@ def _build(key):
     data = TEAMS.get(key)
     if not data:
         return None
-    logo = data.get("logo") or f"https://ui-avatars.com/api/?name={data['ar']}&background=random&color=fff&size=128"
+    logo = data.get("logo") if data.get("logo") else f"https://ui-avatars.com/api/?name={data['ar']}&background=1a1a2e&color=fff&size=128&font-size=0.4"
     return {"key": key, "ar": data["ar"], "en": data["en"], "logo": logo}
+
+
+def get_team_logo(team_name: str) -> str:
+    if not team_name:
+        return f"https://ui-avatars.com/api/?name=X&background=1a1a2e&color=fff&size=128"
+    info = find_team(team_name)
+    if info and info.get("logo"):
+        return info["logo"]
+    from urllib.parse import quote
+    encoded = quote(team_name[:2])
+    return f"https://ui-avatars.com/api/?name={encoded}&background=1a1a2e&color=fff&size=128"

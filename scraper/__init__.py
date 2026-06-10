@@ -7,9 +7,11 @@ from scraper.akwam import AkwamScraper
 from scraper.mashahd import MashahdScraper
 from scraper.threesat import ThreeSatScraper
 from scraper.generic_scraper import GenericScraper
+from scraper.match_center import MatchCenterScraper
 from scraper.base import BaseScraper
 
 SCRAPERS: list[type[BaseScraper]] = [
+    MatchCenterScraper,
     YallaShootScraper,
     YallaKooraScraper,
     GoalHIScraper,
