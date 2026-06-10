@@ -1,10 +1,8 @@
 services:
   - type: web
-    name: scriptmatch
+    name: scriptfoot
     env: python
-    buildCommand: |
-      pip install -r requirements.txt
-      playwright install chromium
+    buildCommand: pip install -r requirements.txt
     startCommand: uvicorn api:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
