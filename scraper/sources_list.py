@@ -95,6 +95,17 @@ SOURCES = [
     {"name": "liveonscore", "url": "https://liveonscore.com", "type": "generic"},
     {"name": "streamonsport", "url": "https://streamonsport.info", "type": "generic"},
 
+    # ======== مواقع جديدة من المستخدم (9) ========
+    {"name": "alkoora_live", "url": "https://www.alkoora.live", "type": "generic"},
+    {"name": "koralive_hd", "url": "https://www.koralive-hd.com", "type": "generic"},
+    {"name": "kooralive_fans", "url": "https://www.kooralive.fans", "type": "generic"},
+    {"name": "yalashout", "url": "https://yalashout.com", "type": "generic"},
+    {"name": "kooragoalstv", "url": "https://www.kooragoalstv.com", "type": "generic"},
+    {"name": "koracity", "url": "https://www.koracity.net", "type": "generic"},
+    {"name": "kooragoal24", "url": "https://kooragoal24.com", "type": "generic"},
+    {"name": "yaallakora", "url": "https://www.yaallakora.com", "type": "generic"},
+    {"name": "kooralive96", "url": "https://kooralive96.cloud", "type": "generic"},
+
     # ======== RSS Feeds أخبار كرة قدم (10) ========
     {"name": "filgoal_rss", "url": "https://www.filgoal.com/rss", "type": "rss"},
     {"name": "kooora_rss", "url": "https://www.kooora.com/rss", "type": "rss"},
