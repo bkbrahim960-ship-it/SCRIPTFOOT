@@ -1,3 +1,4 @@
+import os
 import sqlite3
 import json
 import threading
@@ -10,6 +11,7 @@ from config import config
 class Database:
     def __init__(self, db_path: str = None):
         self.db_path = db_path or config.database_path
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         self._lock = threading.Lock()
         self._init_db()
 
