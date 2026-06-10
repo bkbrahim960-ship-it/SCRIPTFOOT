@@ -1,5 +1,5 @@
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import FastAPI, Query
@@ -38,7 +38,6 @@ def enrich_match(match: Match) -> Match:
             match.away_team = teams[1]["ar"]
             match.home_team_info = Team(name=teams[0]["ar"], name_en=teams[0].get("en"), logo=teams[0].get("logo"))
             match.away_team_info = Team(name=teams[1]["ar"], name_en=teams[1].get("en"), logo=teams[1].get("logo"))
-            return match
         elif len(teams) == 1:
             match.home_team = teams[0]["ar"]
             match.home_team_info = Team(name=teams[0]["ar"], name_en=teams[0].get("en"), logo=teams[0].get("logo"))
@@ -61,7 +60,35 @@ def enrich_match(match: Match) -> Match:
             elif not match.away_team_info and t["key"] != (match.home_team_info.name if match.home_team_info else None):
                 match.away_team = t["ar"]
                 match.away_team_info = Team(name=t["ar"], name_en=t.get("en"), logo=t.get("logo"))
+    match.status_ar = compute_status_ar(match)
     return match
+
+
+def compute_status_ar(match: Match) -> str:
+    if match.status == "live":
+        return "مباشر الآن"
+    if match.status == "finished":
+        return "انتهت"
+    now = datetime.now()
+    try:
+        if match.match_date:
+            parts = match.match_date.split("-")
+            if len(parts) == 3:
+                md = datetime(int(parts[0]), int(parts[1]), int(parts[2]))
+                today = now.replace(hour=0, minute=0, second=0)
+                if md < today:
+                    return "انتهت"
+                diff = (md - today).days
+                if diff == 0:
+                    return "اليوم"
+                if diff == 1:
+                    return "غداً"
+                if diff == 2:
+                    return "بعد غد"
+                return f"بعد {diff} أيام"
+    except Exception:
+        pass
+    return "لم تبدأ"
 
 
 @app.on_event("startup")

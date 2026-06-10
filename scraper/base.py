@@ -1,6 +1,7 @@
 import hashlib
 import re
 from abc import ABC, abstractmethod
+from datetime import datetime, timedelta
 from typing import List, Optional
 from urllib.parse import urljoin, urlparse
 
@@ -173,6 +174,77 @@ class BaseScraper(ABC):
                 if t1 and t2 and len(t1) > 1 and len(t2) > 1:
                     return t1, t2
         return None, None
+
+    def parse_match_date(self, date_text: str, time_text: str = "") -> tuple:
+        now = datetime.now()
+        date_str = now.strftime("%Y-%m-%d")
+        time_str = time_text or ""
+
+        if not date_text:
+            return (date_str, time_str)
+
+        dt = date_text.strip()
+        tl = time_text.strip()
+
+        if "غداً" in dt or "غدا" in dt or "tomorrow" in dt.lower():
+            tomorrow = now + timedelta(days=1)
+            date_str = tomorrow.strftime("%Y-%m-%d")
+        elif "بعد غد" in dt or "after tomorrow" in dt.lower():
+            after = now + timedelta(days=2)
+            date_str = after.strftime("%Y-%m-%d")
+        else:
+            patterns = [
+                r"(\d{4})-(\d{1,2})-(\d{1,2})",
+                r"(\d{1,2})-(\d{1,2})-(\d{4})",
+                r"(\d{1,2})/(\d{1,2})/(\d{4})",
+                r"(\d{1,2})\s+(\d{1,2})\s+(\d{4})",
+            ]
+            for pat in patterns:
+                m = re.search(pat, dt)
+                if m:
+                    g = m.groups()
+                    if len(g[0]) == 4:
+                        date_str = f"{g[0]}-{g[1].zfill(2)}-{g[2].zfill(2)}"
+                    else:
+                        date_str = f"{g[2]}-{g[0].zfill(2)}-{g[1].zfill(2)}"
+                    break
+
+        time_patterns = [
+            r"(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?",
+            r"(\d{1,2})\s*(AM|PM|am|pm)",
+        ]
+        for pat in time_patterns:
+            m = re.search(pat, tl)
+            if m:
+                time_str = m.group(0).strip()
+                break
+
+        return (date_str, time_str)
+
+    def compute_status_ar(self, match_date: str, match_time: str, page_status: str) -> str:
+        if page_status == "live":
+            return "مباشر الآن"
+        if page_status == "finished":
+            return "انتهت"
+
+        now = datetime.now()
+        try:
+            if match_date:
+                parts = match_date.split("-")
+                if len(parts) == 3:
+                    md = datetime(int(parts[0]), int(parts[1]), int(parts[2]))
+                    if md < now.replace(hour=0, minute=0, second=0):
+                        return "انتهت"
+                    if md > now.replace(hour=0, minute=0, second=0):
+                        return "لم تبدأ"
+                    if md == now.replace(hour=0, minute=0, second=0):
+                        return "اليوم"
+        except Exception:
+            pass
+
+        if page_status == "scheduled":
+            return "لم تبدأ"
+        return "لم تبدأ"
 
     def cleanup(self):
         try:

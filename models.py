@@ -28,6 +28,7 @@ class Match(BaseModel):
     league_logo: Optional[str] = None
     stadium: Optional[str] = None
     status: str = "scheduled"
+    status_ar: Optional[str] = None
     score: Optional[str] = None
     match_time: Optional[str] = None
     match_date: Optional[str] = None
