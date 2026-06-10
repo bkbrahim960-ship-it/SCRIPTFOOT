@@ -129,12 +129,49 @@ class BaseScraper(ABC):
         q = re.search(r'(\d{3,4})p', url, re.IGNORECASE)
         return f"{q.group(1)}p" if q else None
 
+    def clean_title(self, title: str) -> str:
+        prefixes = ["مباراة ", "مشاهدة ", "بث مباشر ", "بث ", "مباشر ", "ماتش ",
+                     "live ", "watch ", "stream "]
+        t = title.strip()
+        for p in prefixes:
+            while t.startswith(p):
+                t = t[len(p):]
+        suffixes = [" بث مباشر", " مشاهدة", " مباشر", " اليوم", " الان",
+                     " live", " stream", " watch", " hd", " 4k"]
+        for s in suffixes:
+            if t.endswith(s):
+                t = t[:-len(s)]
+        source_names = ["bein match", "yalla shoot", "yalla koora", "goalhi",
+                        "kora online", "akwam", "mashahd", "3sate",
+                        "بي إن ماتش", "يلا شوت", "يلا كورة", "كورة اونلاين",
+                        "بي ان ماتش", "goalhi"]
+        t_lower = t.lower()
+        for src in source_names:
+            if src in t_lower:
+                idx = t_lower.index(src)
+                t = t[:idx].strip()
+                if t.endswith(","):
+                    t = t[:-1].strip()
+        parts = t.split(" – ")
+        if len(parts) > 1:
+            t = parts[0].strip()
+        parts = t.split(" - ")
+        if len(parts) > 1:
+            t = parts[0].strip()
+        return t.strip()
+
     def extract_teams(self, title: str):
-        separators = [" vs ", " VS ", " – ", " - ", " — ", " ضد ", " x ", " X "]
+        if not title:
+            return None, None
+        title = self.clean_title(title)
+        separators = [" و", " vs ", " VS ", " – ", " - ", " — ", " ضد ", " x ", " X "]
         for sep in separators:
             if sep in title:
                 parts = title.split(sep, 1)
-                return parts[0].strip(), parts[1].strip()
+                t1 = parts[0].strip().strip("،,")
+                t2 = parts[1].strip().strip("،,")
+                if t1 and t2 and len(t1) > 1 and len(t2) > 1:
+                    return t1, t2
         return None, None
 
     def cleanup(self):
